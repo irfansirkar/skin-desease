@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from keras.models import load_model
+import os
 
 # Set the size of the input images
 img_size = (224, 224)
@@ -8,36 +9,37 @@ img_size = (224, 224)
 # Load the trained model
 model = load_model('skin_cancer_detection_model.h5')
 
-# Open the camera stream
-cap = cv2.VideoCapture(0)
+def predict_from_file(image_path):
+    """Predict from a single image file"""
+    if not os.path.exists(image_path):
+        print(f"Image not found: {image_path}")
+        return
+    
+    # Read and preprocess the image
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"Could not read image: {image_path}")
+        return
+    
+    img_resized = cv2.resize(img, img_size)
+    img_processed = np.expand_dims(img_resized, axis=0)
+    img_processed = img_processed / 255.0
+    
+    # Make prediction
+    prediction = model.predict(img_processed)
+    probability = prediction[0][0]
+    label = 'Cancer' if probability > 0.5 else 'Non_Cancer'
+    
+    print(f"Image: {image_path}")
+    print(f"Prediction: {label}")
+    print(f"Probability: {probability:.4f}")
+    print("-" * 40)
 
-# Loop through the frames from the camera
-while True:
-    # Read a frame from the camera
-    ret, frame = cap.read()
-    if not ret:
-        break
+# Example usage
+if __name__ == "__main__":
+    # Test with a single image
+    image_path = input("Enter path to image file (or 'quit' to exit): ")
     
-    # Preprocess the frame
-    img = cv2.resize(frame, img_size)
-    img = np.expand_dims(img, axis=0)
-    img = img / 255.0
-    
-    # Predict whether the frame contains a yawn or not
-    prediction = model.predict(img)
-    if prediction[0] > 0.5:
-        label = 'Cancer'
-    else:
-        label = 'Non_Cancer'
-    
-    # Draw the label on the frame
-    cv2.putText(frame, label, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    # Show the frame
-    cv2.imshow('frame', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# Release the camera and close all windows
-cap.release()
-cv2.destroyAllWindows()
+    while image_path.lower() != 'quit':
+        predict_from_file(image_path)
+        image_path = input("Enter path to image file (or 'quit' to exit): ")
