@@ -24,9 +24,9 @@ def app():
     uploaded_file = st.file_uploader('Choose an image', type=['jpg', 'jpeg', 'png'])
     if uploaded_file is not None:
         # Read the image
-        img = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1)
+        img = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), 1)
         # Display the image
-        st.image(img, caption='Uploaded Image', use_column_width=True)
+        st.image(img, caption='Uploaded Image', use_container_width=True)
         # Preprocess the image
         img = preprocess_image(img)
 
